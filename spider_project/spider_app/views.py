@@ -3,6 +3,10 @@ from django.http import JsonResponse
 from .models import Spider
 from .forms import SpiderForm
 from .spider_logic import SpiderLogic
+from .forms import ChangeAuthorityForm
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def home(request):
@@ -34,9 +38,6 @@ def spider_status(request):
     return JsonResponse({"status": SpiderLogic.status()})
 
 
-from .forms import ChangeAuthorityForm
-
-
 def change_authority(request):
     result = None
     if request.method == "POST":
@@ -47,6 +48,7 @@ def change_authority(request):
             target_username = form.cleaned_data["target_username"]
             # Add your logic to change the account authority here
             # For example, you can call a function to perform the operation
+            logger.info(f"Authority for {target_username} changed by {username}")
             result = f"Authority for {target_username} changed by {username}"
     else:
         form = ChangeAuthorityForm()
