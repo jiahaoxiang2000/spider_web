@@ -1,10 +1,11 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Spider Home</title>
-</head>
-<body>
-    <h1>Spider Home</h1>
+<!-- FILE: spider_project/spider_app/templates/spider_app/home.html -->
+{% extends "spider_app/base.html" %}
+
+{% block title %}Spider Home{% endblock %}
+
+{% block header %}Spider Home{% endblock %}
+
+{% block content %}
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
@@ -13,5 +14,4 @@
     {% if error %}
         <p style="color: red;">{{ error }}</p>
     {% endif %}
-</body>
-</html>
+{% endblock %}

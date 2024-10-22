@@ -1,10 +1,11 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Failed Operations</title>
-  </head>
-  <body>
-    <h1>Failed Operations</h1>
+<!-- FILE: spider_project/spider_app/templates/spider_app/fail.html -->
+{% extends "spider_app/base.html" %}
+
+{% block title %}Failed Operations{% endblock %}
+
+{% block header %}Failed Operations{% endblock %}
+
+{% block content %}
     <ul>
       {% if failed_operations %}
         {% for spider in failed_operations %}
@@ -19,5 +20,4 @@
         <li>No failed operations found.</li>
       {% endif %}
     </ul>
-  </body>
-</html>
+{% endblock %}

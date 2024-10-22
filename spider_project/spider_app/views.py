@@ -32,3 +32,24 @@ def fail(request):
 
 def spider_status(request):
     return JsonResponse({"status": SpiderLogic.status()})
+
+
+from .forms import ChangeAuthorityForm
+
+
+def change_authority(request):
+    result = None
+    if request.method == "POST":
+        form = ChangeAuthorityForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data["username"]
+            password = form.cleaned_data["password"]
+            target_username = form.cleaned_data["target_username"]
+            # Add your logic to change the account authority here
+            # For example, you can call a function to perform the operation
+            result = f"Authority for {target_username} changed by {username}"
+    else:
+        form = ChangeAuthorityForm()
+    return render(
+        request, "spider_app/change_authority.html", {"form": form, "result": result}
+    )

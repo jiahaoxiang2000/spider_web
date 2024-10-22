@@ -1,0 +1,17 @@
+<!-- FILE: spider_project/spider_app/templates/spider_app/change_authority.html -->
+{% extends "spider_app/base.html" %}
+
+{% block title %}Change Account Authority{% endblock %}
+
+{% block header %}Change Account Authority{% endblock %}
+
+{% block content %}
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Change Authority</button>
+    </form>
+    {% if result %}
+        <p>{{ result }}</p>
+    {% endif %}
+{% endblock %}
