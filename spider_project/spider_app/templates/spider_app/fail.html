@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Failed Operations</title>
+  </head>
+  <body>
+    <h1>Failed Operations</h1>
+    <ul>
+      {% if failed_operations %}
+        {% for spider in failed_operations %}
+          <li>
+            <p>Username: {{ spider.username }}</p>
+            <p>Date: {{ spider.date }}</p>
+            <p>Country Code: {{ spider.country_code }}</p>
+            <p>Failed Number: {{ spider.page_number }}</p>
+          </li>
+        {% endfor %}
+      {% else %}
+        <li>No failed operations found.</li>
+      {% endif %}
+    </ul>
+  </body>
+</html>
