@@ -1,5 +1,18 @@
 # Spider web
 
+## Development
+
+There we use the django framework to build the web for all-stack. Here is the development start cmd:
+
+```shell
+cd spider_project
+python manage.py runserver 0.0.0.0:80
+```
+
+> This output the development server on the 80 port. is cause much security issue, so we should not use this in production.
+
+TODO: the production start cmd.
+
 ## Architecture Change Reason
 
 Before the web version, the desktop version had several issues:
