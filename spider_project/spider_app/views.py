@@ -46,10 +46,30 @@ def change_authority(request):
             username = form.cleaned_data["username"]
             password = form.cleaned_data["password"]
             target_username = form.cleaned_data["target_username"]
-            # Add your logic to change the account authority here
-            # For example, you can call a function to perform the operation
-            logger.info(f"Authority for {target_username} changed by {username}")
-            result = f"Authority for {target_username} changed by {username}"
+            action = request.POST.get("action")
+            spider = SpiderLogic(
+                {
+                    "username": username,
+                    "password": password,
+                    "target_username": target_username,
+                }
+            )
+
+            if action == "upgrade":
+                # Logic to upgrade authority
+                # Example: spider_logic.upgrade_role(target_username)
+                logger.info(f"{username} upgraded authority for {target_username}")
+                result = (
+                    f"Authority for {target_username} has been upgraded by {username}."
+                )
+            elif action == "downgrade":
+                # Logic to downgrade authority
+                # Example: spider_logic.downgrade_role(target_username)
+                logger.info(f"{username} downgraded authority for {target_username}")
+                result = f"Authority for {target_username} has been downgraded by {username}."
+            else:
+                result = "Invalid action."
+
     else:
         form = ChangeAuthorityForm()
     return render(

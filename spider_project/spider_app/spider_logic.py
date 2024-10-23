@@ -1,6 +1,9 @@
 import requests
 import pandas as pd
 from datetime import datetime
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class SpiderLogic:
@@ -20,7 +23,8 @@ class SpiderLogic:
         self.login()
 
     def __del__(self):
-        self.logout()
+        # self.logout()
+        pass
 
     def get_country_code(self, country):
         country_codes = {
@@ -52,6 +56,7 @@ class SpiderLogic:
             )
             if login_response.status_code == 200:
                 self.token = login_response.json()["result"]["token"]
+                logger.info(f"login user: {self.username}, token: {self.token}")
             else:
                 raise Exception("Failed to login")
         else:
@@ -62,7 +67,9 @@ class SpiderLogic:
         headers = {"X-Access-Token": self.token}
         response = requests.get(logout_url, headers=headers)
         if response.status_code != 200:
+            logger.error(f"Logout failed for user: {self.username}")
             print("Logout failed")
+        logger.info(f"Logout user: {self.username}")
         self.token = ""
 
     def fetch_data(self):
