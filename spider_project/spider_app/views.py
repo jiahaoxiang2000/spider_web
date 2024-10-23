@@ -58,15 +58,15 @@ def change_authority(request):
             if action == "upgrade":
                 # Logic to upgrade authority
                 # Example: spider_logic.upgrade_role(target_username)
+                spider.change_user_role(target_username)
                 logger.info(f"{username} upgraded authority for {target_username}")
-                result = (
-                    f"Authority for {target_username} has been upgraded by {username}."
-                )
+                result = f"{username} upgraded authority for {target_username}"
             elif action == "downgrade":
                 # Logic to downgrade authority
                 # Example: spider_logic.downgrade_role(target_username)
-                logger.info(f"{username} downgraded authority for {target_username}")
-                result = f"Authority for {target_username} has been downgraded by {username}."
+                spider.revert_normal_role()
+                logger.info(f"{username} downgraded authority to normal user")
+                result = f"{username} downgraded authority to normal user"
             else:
                 result = "Invalid action."
 

@@ -141,28 +141,49 @@ class SpiderLogic:
             raise Exception("Failed to add user role")
 
     def change_user_role(self, target_username):
-        user_id = self.get_user_id(target_username)
+        """
+        Changes the role of the current user to match the role of the target user. NOTE: this role id change only works on one user-id account. not support for multiple user-id account.
+
+        This method retrieves the current user's role and the target user's role,
+        logs the change, deletes the current user's role, and assigns the target
+        user's role to the current user.
+
+        Args:
+            target_username (str): The username of the target user whose role will be assigned to the current user.
+
+        Returns:
+            None
+
+
+        """
+        user_id = self.get_user_id(self.username)
         current_role_id = self.get_role_id(user_id)
         self.original_role_id = current_role_id  # Store original role ID
-        new_role_id = "new_role_id_here"  # Replace with the desired new role ID
+        target_id = self.get_user_id(target_username)
+        target_role_id = self.get_role_id(target_id)
+        logger.info(
+            f"Changing role of user {self.username} to {target_username}, old role: {current_role_id}, new role: {target_role_id}"
+        )
 
         # Delete current role
         self.delete_user_role(user_id, current_role_id)
 
         # Add new role
-        self.add_user_role(user_id, new_role_id)
+        self.add_user_role(user_id, target_role_id)
 
-    def revert_user_role(self, target_username):
-        if not self.original_role_id:
-            self.original_role_id = "8e5d9270824353a223a6727e009"
-        user_id = self.get_user_id(target_username)
-        new_role_id = "new_role_id_here"  # Same as used in change_user_role
+    def revert_normal_role(self):
+        normal_role_id = "082678e5d9270824353a223a6727e009"
+        user_id = self.get_user_id(self.username)
+        user_role_id = self.get_role_id(user_id)
+        logger.info(
+            f"Reverting role of user {self.username} to normal, old role: {user_role_id}, new role: {normal_role_id}"
+        )
 
         # Delete new role
-        self.delete_user_role(user_id, new_role_id)
+        self.delete_user_role(user_id, user_role_id)
 
         # Reassign original role
-        self.add_user_role(user_id, self.original_role_id)
+        self.add_user_role(user_id, normal_role_id)
 
     @staticmethod
     def status():
