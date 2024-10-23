@@ -13,6 +13,15 @@ python manage.py runserver 0.0.0.0:80
 
 TODO: the production start cmd.
 
+## Apply Migrations
+
+Create and apply the initial migrations for your models, i.e. here use sqlite3 as the database. Detail run command:
+
+```shell
+python manage.py makemigrations
+python manage.py migrate
+```
+
 ## Architecture Change Reason
 
 Before the web version, the desktop version had several issues:
