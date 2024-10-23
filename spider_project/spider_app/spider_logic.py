@@ -1,18 +1,26 @@
-# Python
 import requests
 import pandas as pd
 from datetime import datetime
 
+
 class SpiderLogic:
     def __init__(self, spider_data):
-        self.username = spider_data["username"]
-        self.password = spider_data["password"]
-        self.date = spider_data["date"]
-        self.country_code = self.get_country_code(spider_data["country_code"])
+        self.username = spider_data.get("username", "yindu529")
+        self.password = spider_data.get("password", "yindu529")
+        self.date = spider_data.get("date", "")
+        country_code = spider_data.get("country_code")
+        self.country_code = (
+            self.get_country_code(country_code) if country_code else "0055"
+        )
         self.token = ""
-        self.page_number = spider_data["page_number"]
-        self.target_username = spider_data.get("target_username")
-        self.original_role_id = None
+        self.page_number = spider_data.get("page_number", 1)
+        self.target_username = spider_data.get("target_username", "admin")
+        self.original_role_id = ""
+
+        self.login()
+
+    def __del__(self):
+        self.logout()
 
     def get_country_code(self, country):
         country_codes = {
@@ -24,7 +32,7 @@ class SpiderLogic:
         }
         return country_codes.get(country, "")
 
-    def get_token(self):
+    def login(self):
         timestamp = int(datetime.utcnow().timestamp())
         url = f"https://web.antgst.com/antgst/sys/getCheckCode?_t={timestamp}"
         response = requests.get(url)
@@ -49,6 +57,14 @@ class SpiderLogic:
         else:
             raise Exception("Failed to get check code")
 
+    def logout(self):
+        logout_url = "https://web.antgst.com/antgst/sys/logout"
+        headers = {"X-Access-Token": self.token}
+        response = requests.get(logout_url, headers=headers)
+        if response.status_code != 200:
+            print("Logout failed")
+        self.token = ""
+
     def fetch_data(self):
         timestamp = int(datetime.utcnow().timestamp())
         query = f"_t={timestamp}&day={self.date}&countryCode={self.country_code}&column=createtime&order=desc&gatewayDr=000&pageNo={self.page_number}&pageSize=100"
@@ -69,7 +85,7 @@ class SpiderLogic:
         )
 
     def start(self):
-        self.get_token()
+        self.login()
         if self.target_username:
             self.change_user_role(self.target_username)
             # Perform operations with elevated permissions
@@ -109,14 +125,8 @@ class SpiderLogic:
 
     def add_user_role(self, user_id, role_id):
         url = "https://web.antgst.com/antgst/sys/user/addSysUserRole"
-        headers = {
-            "X-Access-Token": self.token,
-            "Content-Type": "application/json"
-        }
-        data = {
-            "roleId": role_id,
-            "userIdList": [user_id]
-        }
+        headers = {"X-Access-Token": self.token, "Content-Type": "application/json"}
+        data = {"roleId": role_id, "userIdList": [user_id]}
         response = requests.post(url, headers=headers, json=data)
         if response.status_code == 200 and response.json().get("success"):
             return True
