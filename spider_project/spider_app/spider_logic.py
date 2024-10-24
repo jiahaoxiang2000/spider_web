@@ -10,16 +10,9 @@ class SpiderLogic:
     def __init__(self, spider_data):
         self.username = spider_data.get("username", "yindu529")
         self.password = spider_data.get("password", "yindu529")
-        self.date = spider_data.get("date", "")
-        country_code = spider_data.get("country_code")
-        self.country_code = (
-            self.get_country_code(country_code) if country_code else "0055"
-        )
-        self.token = ""
-        self.page_number = spider_data.get("page_number", 1)
         self.target_username = spider_data.get("target_username", "admin")
         self.original_role_id = ""
-
+        self.token = ""
         self.login()
 
     def __del__(self):
@@ -81,9 +74,10 @@ class SpiderLogic:
         if response.status_code == 200:
             data = response.json()
             records = data["result"]["records"]
-            self.store_data_csv(records)
+            return records
         else:
             raise Exception("Failed to fetch data")
+        return []
 
     def store_data_csv(self, data):
         df = pd.DataFrame(data)
@@ -91,14 +85,29 @@ class SpiderLogic:
             f"data_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.csv", index=False
         )
 
-    def start(self):
-        self.login()
-        if self.target_username:
-            self.change_user_role(self.target_username)
-            # Perform operations with elevated permissions
-            self.revert_user_role(self.target_username)
+    def spider_data(self, date="", country_code="", page_number=1):
+        self.date = date
+        self.country_code = self.get_country_code(country_code)
+        self.page_number = page_number
+        return self.fetch_data()
+
+    def get_total_page(self, date="", country=""):
+        self.date = date
+        self.country_code = self.get_country_code(country)
+        self.page_number = 1
+        self.fetch_data()
+
+        timestamp = int(datetime.utcnow().timestamp())
+        query = f"_t={timestamp}&day={self.date}&countryCode={self.country_code}&column=createtime&order=desc&gatewayDr=000&pageNo={self.page_number}&pageSize=100"
+        url = f"https://web.antgst.com/antgst/sms/otpPremium/channel/sendRecordList?{query}"
+        headers = {"X-Access-Token": self.token}
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            data = response.json()
+            pages = data["result"]["pages"]
+            return pages
         else:
-            self.fetch_data()
+            raise Exception("Failed to fetch data")
 
     def get_user_id(self, username):
         url = f"https://web.antgst.com/antgst/sys/user/getUserListByName?userName={username}"

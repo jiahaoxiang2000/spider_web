@@ -1,6 +1,12 @@
-from django.shortcuts import render, redirect
-from django.http import JsonResponse
-from .models import Spider
+import json
+import os
+import threading
+from time import sleep, time
+from django.shortcuts import render, redirect, get_object_or_404
+from django.http import FileResponse, JsonResponse
+
+from spider_project.spider_project import settings
+from .models import SpiderTask
 from .forms import SpiderForm
 from .spider_logic import SpiderLogic
 from .forms import ChangeAuthorityForm
@@ -14,10 +20,72 @@ def home(request):
         form = SpiderForm(request.POST)
         if form.is_valid():
             spider_data = form.cleaned_data
-            spider_logic = SpiderLogic(spider_data)
+            date = spider_data["date"]
+            country = spider_data["country"]
+            username = spider_data["username"]
+            password = spider_data["password"]
+
+            spider_logic = SpiderLogic(
+                {
+                    "username": username,
+                    "password": password,
+                }
+            )
             try:
-                spider_logic.start()
-                return redirect("fail")
+                total_page = spider_logic.get_total_page(date, country)
+                # here we start this task, we will save the task to db
+                # create the data_file fil
+                task = SpiderTask.objects.create(
+                    date=date,
+                    country=country,
+                    total_page=total_page,
+                    username=username,
+                    password=password,
+                    current_page=1,
+                    done=False,
+                    timestamp=int(time()),
+                )
+                task.save(force_insert=False, force_update=True)
+                # create the data_file file for the task
+
+                file_path = f"task_{task.id}.json"
+                full_path = os.path.join(settings.MEDIA_RELATIVE_ROOT, file_path)
+
+                task.data_file_path = full_path
+
+                # here we will start one thread to do the task, the task is from the current_page to total_page, by the spider_logic.spider_data function
+                def run_spider(task_id):
+                    task = SpiderTask.objects.get(id=task_id)
+                    while task.current_page <= task.total_page and not task.stop_flag:
+                        data = spider_logic.spider_data(
+                            task.date, task.country, task.current_page
+                        )
+                        file_path = f"spider_data/task_{task.id}.json"
+                        full_path = os.path.join(
+                            settings.MEDIA_RELATIVE_ROOT, file_path
+                        )
+                        with open(full_path, "w") as f:
+                            json.dump(data, f)
+                        task.current_page += 1
+                        task.save(force_insert=False, force_update=True)
+                        logger.info(
+                            f"Task {task.id} processing page {task.current_page}"
+                        )
+                    if task.stop_flag:
+                        logger.info(f"Task {task.id} has been stopped.")
+                    else:
+                        task.done = True
+                        task.save()
+                        logger.info(f"Task {task.id} completed.")
+
+                thread = threading.Thread(target=run_spider, args=(task.id,))
+                thread.start()
+
+                return render(
+                    request,
+                    "spider_app/home.html",
+                    {"form": form, "error": "Task started."},
+                )
             except Exception as e:
                 return render(
                     request, "spider_app/home.html", {"form": form, "error": str(e)}
@@ -27,15 +95,31 @@ def home(request):
     return render(request, "spider_app/home.html", {"form": form})
 
 
-def fail(request):
-    failed_operations = Spider.objects.all()
-    return render(
-        request, "spider_app/fail.html", {"failed_operations": failed_operations}
-    )
+def stop_task(request, task_id):
+    task = get_object_or_404(SpiderTask, id=task_id)
+    if not task.done and not task.stop_flag:
+        task.stop_flag = True
+        task.save()
+        logger.info(f"Task {task.id} has been signaled to stop.")
+    return redirect("tasks")  # Redirect to a page showing tasks
 
 
-def spider_status(request):
-    return JsonResponse({"status": SpiderLogic.status()})
+def tasks(request):
+    tasks = SpiderTask.objects.all().order_by("-id")
+    return render(request, "spider_app/task.html", {"tasks": tasks})
+
+
+def download_file(request, task_id):
+    task = get_object_or_404(SpiderTask, id=task_id)
+    if task:
+        if task.data_file_path and os.path.exists(task.data_file_path):
+            file_path = task.data_file_path
+            return FileResponse(
+                open(file_path, "rb"),
+                as_attachment=True,
+                filename=os.path.basename(file_path),
+            )
+    return redirect("tasks")
 
 
 def change_authority(request):

@@ -17,6 +17,11 @@ import logging.config
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# settings.py
+import os
+
+# Add MEDIA settings
+MEDIA_RELATIVE_ROOT = os.path.join("media")
 
 LOGGING = {
     "version": 1,
