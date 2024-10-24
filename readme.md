@@ -18,7 +18,7 @@ TODO: the production start cmd.
 Create and apply the initial migrations for your models, i.e. here use sqlite3 as the database. Detail run command:
 
 ```shell
-python manage.py makemigrations
+python manage.py makemigrations 
 python manage.py migrate
 ```
 

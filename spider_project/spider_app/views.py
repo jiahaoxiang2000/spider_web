@@ -1,11 +1,12 @@
 import json
 import os
+import csv
 import threading
 from time import sleep, time
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import FileResponse, JsonResponse
 
-from spider_project.spider_project import settings
+
 from .models import SpiderTask
 from .forms import SpiderForm
 from .spider_logic import SpiderLogic
@@ -13,6 +14,12 @@ from .forms import ChangeAuthorityForm
 import logging
 
 logger = logging.getLogger(__name__)
+
+MEDIA_RELATIVE_ROOT = os.path.join("media")
+
+# Check if the directory exists, if not, create it
+if not os.path.exists(MEDIA_RELATIVE_ROOT):
+    os.makedirs(MEDIA_RELATIVE_ROOT)
 
 
 def home(request):
@@ -45,13 +52,14 @@ def home(request):
                     done=False,
                     timestamp=int(time()),
                 )
-                task.save(force_insert=False, force_update=True)
+
                 # create the data_file file for the task
+                file_path = f"task_{task.id}.csv"
+                relative_path = os.path.join(MEDIA_RELATIVE_ROOT, file_path)
 
-                file_path = f"task_{task.id}.json"
-                full_path = os.path.join(settings.MEDIA_RELATIVE_ROOT, file_path)
+                task.data_file_path = relative_path
 
-                task.data_file_path = full_path
+                task.save(force_insert=False, force_update=True)
 
                 # here we will start one thread to do the task, the task is from the current_page to total_page, by the spider_logic.spider_data function
                 def run_spider(task_id):
@@ -60,16 +68,19 @@ def home(request):
                         data = spider_logic.spider_data(
                             task.date, task.country, task.current_page
                         )
-                        file_path = f"spider_data/task_{task.id}.json"
-                        full_path = os.path.join(
-                            settings.MEDIA_RELATIVE_ROOT, file_path
-                        )
-                        with open(full_path, "w") as f:
-                            json.dump(data, f)
+
+                        # there the data is json format array, here we let the data to append the .csv file, if the file is not exist, we will create it
+                        if task.data_file_path:
+                            with open(task.data_file_path, "a", newline="") as f:
+                                writer = csv.DictWriter(f, fieldnames=data[0].keys())
+                                if task.current_page == 1:
+                                    writer.writeheader()
+                                for item in data:
+                                    writer.writerow(item)
                         task.current_page += 1
                         task.save(force_insert=False, force_update=True)
-                        logger.info(
-                            f"Task {task.id} processing page {task.current_page}"
+                        logger.debug(
+                            f"Task {task.id} processing page {task.current_page}, total {task.total_page}"
                         )
                     if task.stop_flag:
                         logger.info(f"Task {task.id} has been stopped.")
@@ -87,6 +98,7 @@ def home(request):
                     {"form": form, "error": "Task started."},
                 )
             except Exception as e:
+                logger.error(f"Home Error: {str(e)}")
                 return render(
                     request, "spider_app/home.html", {"form": form, "error": str(e)}
                 )

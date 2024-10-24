@@ -47,7 +47,7 @@
                 {% endif %}
             </td>
             <td>
-                {% if task.data_file %}
+                {% if task.data_file_path %}
                     <a href="{% url 'download_file' task.id %}">Download</a>
                 {% else %}
                     N/A
