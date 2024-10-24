@@ -11,6 +11,13 @@ python manage.py runserver 0.0.0.0:80
 
 > This output the development server on the 80 port. is cause much security issue, so we should not use this in production.
 
+production start cmd:
+
+```shell
+cd spider_project
+nohup ../.venv/bin/python3 manage.py runserver 0.0.0.0:80 &
+```
+
 TODO: the production start cmd.
 
 ## Apply Migrations
