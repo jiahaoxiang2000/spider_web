@@ -11,14 +11,11 @@ python manage.py runserver 0.0.0.0:80
 
 > This output the development server on the 80 port. is cause much security issue, so we should not use this in production.
 
-production start cmd:
+docker start cmd:
 
 ```shell
-cd spider_project
-nohup ../.venv/bin/python3 manage.py runserver 0.0.0.0:80 &
+pip install -r requirements.txt && cd spider_project && python manage.py makemigrations &&  python manage.py migrate && python manage.py runserver 0.0.0.0:8080
 ```
-
-TODO: the production start cmd.
 
 ## Apply Migrations
 
