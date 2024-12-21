@@ -1,0 +1,58 @@
+<!-- task.html -->
+{% extends "base.html" %}
+
+{% block title %}Tasks{% endblock %}
+
+{% block header %}Tasks{% endblock %}
+
+{% block content %}
+    <h2>Spider Tasks</h2>
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Username</th>
+            <th>Date</th>
+            <th>Country</th>
+            <th>Current Page</th>
+            <th>Total Page</th>
+            <th>Status</th>
+            <th>Action</th>
+            <th>Download</th>
+        </tr>
+        {% for task in tasks %}
+        <tr>
+            <td>{{ task.id }}</td>
+            <td>{{ task.username }}</td>
+            <td>{{ task.date }}</td>
+            <td>{{ task.country }}</td>
+            <td>{{ task.current_page }}</td>
+            <td>{{ task.total_page }}</td>
+            <td>
+                {% if task.done %}
+                    Completed
+                {% elif task.stop_flag %}
+                    Stopped
+                {% else %}
+                    Running
+                {% endif %}
+            </td>
+            <td>
+                {% if not task.done and not task.stop_flag %}
+                    <form method="post" action="/stop_task/{{ task.id }}">
+                        <button type="submit">Stop Task</button>
+                    </form>
+                {% else %}
+                    N/A
+                {% endif %}
+            </td>
+            <td>
+                {% if task.data_file_path %}
+                    <a href="/download/{{ task.id }}">Download</a>
+                {% else %}
+                    N/A
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+{% endblock %}

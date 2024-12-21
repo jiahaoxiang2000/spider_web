@@ -1,5 +1,7 @@
 {
     "cSpell.words": [
-        "userid"
+        "fastapi",
+        "userid",
+        "uvicorn"
     ]
 }

@@ -1,0 +1,16 @@
+<!-- FILE: spider_project/spider_app/templates/spider_app/change_authority.html -->
+{% extends "base.html" %}
+
+{% block title %}Change Account Authority{% endblock %}
+
+{% block header %}Change Account Authority{% endblock %}
+
+{% block content %}
+    <form method="post" action="/change_authority">
+        <button type="submit" name="action" value="upgrade">Upgrade Authority</button>
+        <button type="submit" name="action" value="downgrade">Downgrade Authority</button>
+    </form>
+    {% if result %}
+        <p>{{ result }}</p>
+    {% endif %}
+{% endblock %}
