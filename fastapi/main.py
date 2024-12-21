@@ -27,3 +27,20 @@ def get_task(request: Request):
 @app.get("/change_authority")
 def get_change_authority(request: Request):
     return templates.TemplateResponse("change_authority.html", {"request": request})
+
+
+@app.post("/change_authority")
+async def post_change_authority(request: Request):
+    form_data = await request.form()
+    username = form_data.get("username")
+    action = form_data.get("action")
+
+    result = None
+    if action == "upgrade":
+        result = f"Successfully upgraded authority for user: {username}"
+    elif action == "downgrade":
+        result = f"Successfully downgraded authority for user: {username}"
+
+    return templates.TemplateResponse(
+        "change_authority.html", {"request": request, "result": result}
+    )

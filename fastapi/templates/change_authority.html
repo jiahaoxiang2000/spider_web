@@ -1,4 +1,3 @@
-<!-- FILE: spider_project/spider_app/templates/spider_app/change_authority.html -->
 {% extends "base.html" %}
 
 {% block title %}Change Account Authority{% endblock %}
@@ -6,11 +5,37 @@
 {% block header %}Change Account Authority{% endblock %}
 
 {% block content %}
-    <form method="post" action="/change_authority">
-        <button type="submit" name="action" value="upgrade">Upgrade Authority</button>
-        <button type="submit" name="action" value="downgrade">Downgrade Authority</button>
-    </form>
-    {% if result %}
-        <p>{{ result }}</p>
-    {% endif %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form method="post" action="/change_authority">
+                    <div class="form-group mb-4">
+                        <label for="username" class="form-label">
+                            <i class="bi bi-person"></i> Username
+                        </label>
+                        <input type="text" class="form-control" id="username" name="username" 
+                               placeholder="Enter username" required>
+                    </div>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="submit" name="action" value="upgrade" 
+                                class="btn btn-success me-md-2">
+                            <i class="bi bi-arrow-up-circle"></i> Upgrade Authority
+                        </button>
+                        <button type="submit" name="action" value="downgrade" 
+                                class="btn btn-warning">
+                            <i class="bi bi-arrow-down-circle"></i> Downgrade Authority
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {% if result %}
+        <div class="alert alert-info mt-3" role="alert">
+            <i class="bi bi-info-circle"></i> {{ result }}
+        </div>
+        {% endif %}
+    </div>
+</div>
 {% endblock %}
