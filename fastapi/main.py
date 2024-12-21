@@ -4,9 +4,11 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from auth import Auth
+from account import AccountManager
 
 app = FastAPI()
 auth = Auth()  # Create an instance of Auth
+account_manager = AccountManager()  # Add account manager instance
 
 # Mount static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -60,4 +62,70 @@ async def post_change_authority(request: Request):
 
     return templates.TemplateResponse(
         "change_authority.html", {"request": request, "result": result}
+    )
+
+
+@app.get("/account")
+def get_accounts(request: Request):
+    return templates.TemplateResponse(
+        "account.html", {"request": request, "accounts": account_manager.get_accounts()}
+    )
+
+
+@app.post("/account")
+async def add_account(request: Request):
+    form_data = await request.form()
+    username = str(form_data.get("username"))
+    password = str(form_data.get("password"))
+
+    success = account_manager.add_account(username, password)
+    message = "Account added successfully" if success else "Username already exists"
+
+    return templates.TemplateResponse(
+        "account.html",
+        {
+            "request": request,
+            "accounts": account_manager.get_accounts(),
+            "message": message,
+        },
+    )
+
+
+@app.post("/account/delete")
+async def delete_account(request: Request):
+    form_data = await request.form()
+    username = str(form_data.get("username"))
+
+    success = account_manager.delete_account(username)
+    message = "Account deleted successfully" if success else "Failed to delete account"
+
+    return templates.TemplateResponse(
+        "account.html",
+        {
+            "request": request,
+            "accounts": account_manager.get_accounts(),
+            "message": message,
+        },
+    )
+
+
+@app.post("/account/toggle")
+async def toggle_account(request: Request):
+    form_data = await request.form()
+    username = str(form_data.get("username"))
+
+    success = account_manager.toggle_account(username)
+    message = (
+        "Account status toggled successfully"
+        if success
+        else "Failed to toggle account status"
+    )
+
+    return templates.TemplateResponse(
+        "account.html",
+        {
+            "request": request,
+            "accounts": account_manager.get_accounts(),
+            "message": message,
+        },
     )
