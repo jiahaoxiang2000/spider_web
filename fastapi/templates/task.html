@@ -6,16 +6,36 @@
 {% block header %}Spider Tasks{% endblock %}
 
 {% block content %}
+    <!-- Task Creation Form -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Create New Task</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" action="/create_task" class="row g-3">
+                <div class="col-md-6">
+                    <label for="date" class="form-label">Date</label>
+                    <input type="date" class="form-control" id="date" name="date" required>
+                </div>
+                <div class="col-md-6 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary">Create Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tasks Table -->
     <div class="card shadow-sm">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Task List</h5>
+        </div>
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead class="table-light">
                         <tr>
                             <th>ID</th>
-                            <th>Username</th>
                             <th>Date</th>
-                            <th>Country</th>
                             <th>Progress</th>
                             <th>Status</th>
                             <th>Action</th>
@@ -26,13 +46,11 @@
                         {% for task in tasks %}
                         <tr>
                             <td>{{ task.id }}</td>
-                            <td>{{ task.username }}</td>
                             <td>{{ task.date }}</td>
-                            <td>{{ task.country }}</td>
                             <td>
                                 <div class="progress" style="height: 20px;">
                                     <div class="progress-bar" role="progressbar" 
-                                         style="width: {{ (task.current_page / task.total_page * 100)|round }}%"
+                                         style="width: {{ (task.current_page / task.total_page * 100)|round if task.total_page > 0 else 0 }}%"
                                          aria-valuenow="{{ task.current_page }}" 
                                          aria-valuemin="0" 
                                          aria-valuemax="{{ task.total_page }}">
@@ -50,14 +68,18 @@
                                 {% endif %}
                             </td>
                             <td>
-                                {% if not task.done and not task.stop_flag %}
-                                    <form method="post" action="/stop_task/{{ task.id }}">
+                                {% if task.done or task.stop_flag %}
+                                    <form method="post" action="/start_task/{{ task.id }}" class="d-inline">
+                                        <button type="submit" class="btn btn-success btn-sm">
+                                            <i class="bi bi-play-circle"></i> Start
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <form method="post" action="/stop_task/{{ task.id }}" class="d-inline">
                                         <button type="submit" class="btn btn-danger btn-sm">
                                             <i class="bi bi-stop-circle"></i> Stop
                                         </button>
                                     </form>
-                                {% else %}
-                                    <span class="text-muted">N/A</span>
                                 {% endif %}
                             </td>
                             <td>

@@ -1,14 +1,18 @@
+import os
 from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from auth import Auth
 from account import AccountDB, AccountManager
+from database import TaskDB
+from task_manager import TaskManager
 
 app = FastAPI()
 auth = Auth()  # Create an instance of Auth
 account_manager = AccountManager()  # Add account manager instance
+task_manager = TaskManager()
 
 # Mount static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -23,8 +27,43 @@ def read_root():
 
 
 @app.get("/task")
-def get_task(request: Request):
-    return templates.TemplateResponse("task.html", {"request": request, "tasks": []})
+async def get_task(request: Request):
+    tasks = task_manager.get_tasks()
+    return templates.TemplateResponse("task.html", {"request": request, "tasks": tasks})
+
+
+@app.post("/create_task")
+async def create_task(request: Request):
+    form_data = await request.form()
+    date = form_data.get("date")
+
+    if not date:
+        return {"error": "Date is required"}
+
+    await task_manager.create_task(date)  # type: ignore
+    return RedirectResponse(url="/task", status_code=303)
+
+
+@app.post("/start_task/{task_id}")
+async def start_task(task_id: int):
+    await task_manager.start_task(task_id)
+    return RedirectResponse(url="/task", status_code=303)
+
+
+@app.post("/stop_task/{task_id}")
+async def stop_task(task_id: int):
+    await task_manager.stop_task(task_id)
+    return RedirectResponse(url="/task", status_code=303)
+
+
+@app.get("/download/{task_id}")
+async def download_file(task_id: int):
+    task = task_manager.session.query(TaskDB).get(task_id)
+    if task and task.data_file_path and os.path.exists(task.data_file_path):
+        return FileResponse(
+            task.data_file_path, filename=os.path.basename(task.data_file_path)
+        )
+    return {"error": "File not found"}
 
 
 @app.get("/change_authority")

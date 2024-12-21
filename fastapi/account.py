@@ -1,9 +1,7 @@
 import aiohttp
 from pydantic import BaseModel
 from typing import List, Optional
-from sqlalchemy import create_engine, Column, String, Boolean
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from database import Base, engine, SessionLocal, AccountDB
 import time
 from utils.logger_config import get_logger
 import asyncio
@@ -12,17 +10,6 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
 logger = get_logger(__name__)
-Base = declarative_base()
-
-
-class AccountDB(Base):
-    __tablename__ = "accounts"
-
-    username = Column(String, primary_key=True)
-    password = Column(String, nullable=False)
-    token = Column(String, nullable=True)
-    is_online = Column(Boolean, default=False, server_default="0")
-    is_active = Column(Boolean, default=True, server_default="1")
 
 
 class Account(BaseModel):
@@ -41,10 +28,9 @@ class Account(BaseModel):
 
 class AccountManager:
     def __init__(self):
-        self.engine = create_engine("sqlite:///spider.db")
+        self.engine = engine
         Base.metadata.create_all(self.engine)
-        Session = sessionmaker(bind=self.engine)
-        self.session = Session()
+        self.session = SessionLocal()
         self.health_check_url = "https://web.antgst.com/antgst/sys/user/isCommonUser"
         self.scheduler = AsyncIOScheduler()
         self.health_check_task = None
