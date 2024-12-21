@@ -35,7 +35,8 @@
             <thead>
                 <tr>
                     <th>Username</th>
-                    <th>Status</th>
+                    <th>Active </th>
+                    <th>Online </th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -44,17 +45,28 @@
                 <tr>
                     <td>{{ account.username }}</td>
                     <td>
+                        <span class="badge bg-{{ 'success' if account.is_active else 'secondary' }}">
+                            {{ "Active" if account.is_active else "Inactive" }}
+                        </span>
+                    </td>
+                    <td>
                         <span class="badge bg-{{ 'success' if account.is_online else 'secondary' }}">
                             {{ "Online" if account.is_online else "Offline" }}
                         </span>
                     </td>
                     <td>
                         <div class="btn-group" role="group">
-                            <form method="POST" action="/account/toggle_online" class="me-2">
+                            <form method="POST" action="/account/login" class="me-2">
                                 <input type="hidden" name="username" value="{{ account.username }}">
-                                <input type="hidden" name="current_status" value="{{ account.is_online }}">
-                                <button type="submit" class="btn btn-{{ 'warning' if account.is_online else 'success' }} btn-sm">
-                                    {{ "Go Offline" if account.is_online else "Go Online" }}
+                                <button type="submit" class="btn btn-primary btn-sm">
+                                    Login
+                                </button>
+                            </form>
+                            <form method="POST" action="/account/toggle_active" class="me-2">
+                                <input type="hidden" name="username" value="{{ account.username }}">
+                                <input type="hidden" name="current_status" value="{{ account.is_active }}">
+                                <button type="submit" class="btn btn-{{ 'warning' if account.is_active else 'success' }} btn-sm">
+                                    {{ "Deactivate" if account.is_active else "Activate" }}
                                 </button>
                             </form>
                             <form method="POST" action="/account/delete">

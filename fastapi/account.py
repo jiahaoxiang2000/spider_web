@@ -6,9 +6,12 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import time
 from utils.logger_config import get_logger
+import asyncio
+from datetime import datetime
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.interval import IntervalTrigger
 
 logger = get_logger(__name__)
-
 Base = declarative_base()
 
 
@@ -19,6 +22,7 @@ class AccountDB(Base):
     password = Column(String, nullable=False)
     token = Column(String, nullable=True)
     is_online = Column(Boolean, default=False, server_default="0")
+    is_active = Column(Boolean, default=True, server_default="1")
 
 
 class Account(BaseModel):
@@ -26,6 +30,7 @@ class Account(BaseModel):
     password: str
     token: Optional[str] = None
     is_online: bool = False
+    is_active: bool = True
 
     model_config = {"from_attributes": True}
 
@@ -40,6 +45,92 @@ class AccountManager:
         Base.metadata.create_all(self.engine)
         Session = sessionmaker(bind=self.engine)
         self.session = Session()
+        self.health_check_url = "https://web.antgst.com/antgst/sys/user/isCommonUser"
+        self.scheduler = AsyncIOScheduler()
+        self.health_check_task = None
+        self.loop = asyncio.get_event_loop()
+        logger.info("AccountManager initialized, starting health check task...")
+        self.start_health_check_task()
+
+    def start_health_check_task(self):
+        """Start the periodic health check task"""
+        if self.health_check_task is None:
+
+            async def run_periodic():
+                logger.info("Starting periodic health check loop")
+                while True:
+                    logger.debug("Running periodic health check iteration")
+                    try:
+                        await self.periodic_health_check()
+                    except Exception as e:
+                        logger.error(f"Error in periodic health check loop: {str(e)}")
+                    logger.debug("Sleeping for 10 minutes before next health check")
+                    await asyncio.sleep(600)
+
+            self.health_check_task = asyncio.ensure_future(run_periodic())
+            logger.info(
+                f"Health check task created with ID: {id(self.health_check_task)}"
+            )
+
+    async def check_account_health(self, account: AccountDB) -> bool:
+        """Check if an account is healthy and online"""
+        if not account.is_active is True or account.token is None:
+            return False
+
+        headers = {"X-Access-Token": str(account.token)}
+        async with aiohttp.ClientSession() as session:
+            try:
+                async with session.get(
+                    self.health_check_url, headers=headers
+                ) as response:
+                    if response.status == 200:
+                        if account.is_online is False:
+                            account.is_online = True  # type: ignore
+                            self.session.commit()
+                        return True
+            except Exception as e:
+                logger.error(f"Health check failed for {account.username}: {str(e)}")
+
+        # If we reach here, either the request failed or returned non-200
+        if account.is_active:
+            # Try to login again
+            login_success = await self.login(account)
+            if not login_success:
+                account.is_online = False  # type: ignore
+                self.session.commit()
+            return login_success
+        return False
+
+    async def periodic_health_check(self):
+        """Run health checks for all active accounts"""
+        logger.debug("Starting periodic health check")
+        try:
+            accounts = (
+                self.session.query(AccountDB).filter(AccountDB.is_active == True).all()
+            )
+            logger.info(f"Found {len(accounts)} active accounts to check")
+            for account in accounts:
+                logger.info(f"Checking health for account: {account.username}")
+                is_healthy = await self.check_account_health(account)
+                logger.info(
+                    f"Health check for {account.username}: {'healthy' if is_healthy else 'unhealthy'}"
+                )
+        except Exception as e:
+            logger.error(f"Error in periodic health check: {str(e)}")
+        finally:
+            logger.debug("Completed periodic health check")
+
+    async def cleanup(self):
+        """Cleanup method to be called when shutting down"""
+        logger.info("Starting cleanup process")
+        if self.health_check_task:
+            logger.info("Canceling health check task")
+            self.health_check_task.cancel()
+            try:
+                await self.health_check_task
+            except asyncio.CancelledError:
+                logger.info("Health check task cancelled successfully")
+        logger.info("Cleanup completed")
 
     def add_account(self, username: str, password: str) -> bool:
         if self.session.query(AccountDB).filter(AccountDB.username == username).first():
@@ -71,30 +162,16 @@ class AccountManager:
         logger.debug(f"Retrieved {len(accounts)} accounts from database")
         return [Account.from_orm(acc) for acc in accounts]
 
-    async def set_online_status(self, username: str, status: bool) -> bool:
+    async def set_active_status(self, username: str, status: bool) -> bool:
         account = (
             self.session.query(AccountDB).filter(AccountDB.username == username).first()
         )
         if account:
-            if status and not account.is_online:  # type: ignore
-                logger.info(f"Attempting to login account: {username}")
-                login_success = await self.login(account)
-                if not login_success:
-                    logger.error(f"Failed to login account: {username}")
-                    return False
-            else:
-                # If going offline, try to logout first
-                if not status and account.is_online:  # type: ignore
-                    logout_success = await self.logout(account)
-                    if not logout_success:
-                        logger.error(f"Failed to logout account: {username}")
-                        return False
-                else:
-                    account.is_online = status  # type: ignore
-                    self.session.commit()
-                logger.info(f"Set account {username} online status to: {status}")
+            account.is_active = status  # type: ignore
+            self.session.commit()
+            logger.info(f"Set account {username} active status to: {status}")
             return True
-        logger.warning(f"Failed to set online status: {username} not found")
+        logger.warning(f"Failed to set active status: {username} not found")
         return False
 
     async def login(self, account: AccountDB) -> bool:

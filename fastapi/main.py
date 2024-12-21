@@ -4,7 +4,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from auth import Auth
-from account import AccountManager
+from account import AccountDB, AccountManager
 
 app = FastAPI()
 auth = Auth()  # Create an instance of Auth
@@ -109,15 +109,19 @@ async def delete_account(request: Request):
     )
 
 
-@app.post("/account/toggle_online")
-async def toggle_online(request: Request):
+@app.post("/account/toggle_active")
+async def toggle_active(request: Request):
     form_data = await request.form()
     username = str(form_data.get("username"))
     current_status = form_data.get("current_status") == "True"
-    
-    success = await account_manager.set_online_status(username, not current_status)
-    message = "Online status toggled successfully" if success else "Failed to toggle online status"
-    
+
+    success = await account_manager.set_active_status(username, not current_status)
+    message = (
+        "Active status toggled successfully"
+        if success
+        else "Failed to toggle active status"
+    )
+
     return templates.TemplateResponse(
         "account.html",
         {
@@ -126,3 +130,34 @@ async def toggle_online(request: Request):
             "message": message,
         },
     )
+
+
+@app.post("/account/login")
+async def login_account(request: Request):
+    form_data = await request.form()
+    username = str(form_data.get("username"))
+
+    account = (
+        account_manager.session.query(AccountDB).filter_by(username=username).first()
+    )
+    if account:
+        success = await account_manager.login(account)
+        message = (
+            "Account logged in successfully" if success else "Failed to login account"
+        )
+    else:
+        message = "Account not found"
+
+    return templates.TemplateResponse(
+        "account.html",
+        {
+            "request": request,
+            "accounts": account_manager.get_accounts(),
+            "message": message,
+        },
+    )
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    await account_manager.cleanup()
