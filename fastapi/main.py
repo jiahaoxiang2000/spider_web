@@ -3,9 +3,10 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
+from auth import Auth
 
 app = FastAPI()
-
+auth = Auth()  # Create an instance of Auth
 
 # Mount static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -32,14 +33,30 @@ def get_change_authority(request: Request):
 @app.post("/change_authority")
 async def post_change_authority(request: Request):
     form_data = await request.form()
-    username = form_data.get("username")
+    username = str(form_data.get("username", ""))
     action = form_data.get("action")
+
+    if not username:
+        return templates.TemplateResponse(
+            "change_authority.html",
+            {"request": request, "result": "Username cannot be empty"},
+        )
 
     result = None
     if action == "upgrade":
-        result = f"Successfully upgraded authority for user: {username}"
+        success = await auth.upgrade_authority(username)
+        result = (
+            f"Successfully upgraded authority for user: {username}"
+            if success
+            else "Failed to upgrade authority"
+        )
     elif action == "downgrade":
-        result = f"Successfully downgraded authority for user: {username}"
+        success = await auth.downgrade_authority(username)
+        result = (
+            f"Successfully downgraded authority for user: {username}"
+            if success
+            else "Failed to downgrade authority"
+        )
 
     return templates.TemplateResponse(
         "change_authority.html", {"request": request, "result": result}
