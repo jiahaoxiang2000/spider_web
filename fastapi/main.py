@@ -109,18 +109,15 @@ async def delete_account(request: Request):
     )
 
 
-@app.post("/account/toggle")
-async def toggle_account(request: Request):
+@app.post("/account/toggle_online")
+async def toggle_online(request: Request):
     form_data = await request.form()
     username = str(form_data.get("username"))
-
-    success = account_manager.toggle_account(username)
-    message = (
-        "Account status toggled successfully"
-        if success
-        else "Failed to toggle account status"
-    )
-
+    current_status = form_data.get("current_status") == "True"
+    
+    success = await account_manager.set_online_status(username, not current_status)
+    message = "Online status toggled successfully" if success else "Failed to toggle online status"
+    
     return templates.TemplateResponse(
         "account.html",
         {
