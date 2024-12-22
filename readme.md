@@ -4,27 +4,23 @@
 
 There we use the django framework to build the web for all-stack. Here is the development start cmd:
 
-```shell
-cd spider_project
-python manage.py runserver 0.0.0.0:80
-```
+## Will DO
 
-> This output the development server on the 80 port. is cause much security issue, so we should not use this in production.
+- [x] the account keep live function on all day
+- [x] the spider task
+  - [x] the spider logic, need control the spider speed
+  - [x] the timing run on every day 00:30
 
-docker start cmd:
+## Installation And Running
 
-```shell
-pip install -r requirements.txt && cd spider_project && python manage.py makemigrations &&  python manage.py migrate && python manage.py runserver 0.0.0.0:8080
+```bash
+pip install -r ../requirements.txt
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 ## Apply Migrations
 
 Create and apply the initial migrations for your models, i.e. here use sqlite3 as the database. Detail run command:
-
-```shell
-python manage.py makemigrations 
-python manage.py migrate
-```
 
 ## Architecture Change Reason
 
