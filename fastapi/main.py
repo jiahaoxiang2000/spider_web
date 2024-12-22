@@ -14,8 +14,9 @@ auth = Auth()  # Create an instance of Auth
 account_manager = AccountManager()  # Add account manager instance
 task_manager = TaskManager()
 
-# Mount static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# Mount static files with absolute path
+static_path = Path(__file__).parent / "static"
+app.mount("/static", StaticFiles(directory=str(static_path)), name="static")
 
 # Configure templates
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
@@ -29,7 +30,11 @@ def read_root():
 @app.get("/task")
 async def get_task(request: Request):
     tasks = task_manager.get_tasks()
-    return templates.TemplateResponse("task.html", {"request": request, "tasks": tasks})
+    spider_sleep_time = task_manager.get_spider_sleep_time()
+    return templates.TemplateResponse(
+        "task.html",
+        {"request": request, "tasks": tasks, "spider_sleep_time": spider_sleep_time},
+    )
 
 
 @app.post("/create_task")
@@ -195,6 +200,14 @@ async def login_account(request: Request):
             "message": message,
         },
     )
+
+
+@app.post("/update_sleep_time")
+async def update_sleep_time(request: Request):
+    form_data = await request.form()
+    sleep_time = int(str(form_data.get("sleep_time", 10)))
+    await task_manager.update_sleep_time(sleep_time)
+    return RedirectResponse(url="/task", status_code=303)
 
 
 @app.on_event("shutdown")

@@ -11,6 +11,14 @@ from typing import Optional
 logger = get_logger(__name__)
 
 
+# Make spider_sleep_time global and mutable
+class SpiderConfig:
+    sleep_time = 180
+
+
+spider_config = SpiderConfig()
+
+
 async def spider_task(task_id: int):
     """
     Spider task that runs in the background
@@ -87,12 +95,16 @@ async def spider_task(task_id: int):
                                 f"Task {task_id} completed page {task.current_page}"
                             )
                         else:
+                            setattr(account, "is_online", False)
+                            session.commit()
                             logger.error(
                                 f"Request failed with status {response.status}"
                             )
                             break
 
-                await asyncio.sleep(10)  # Rate limiting
+                await asyncio.sleep(
+                    spider_config.sleep_time
+                )  # Use the configurable sleep time
 
             except Exception as e:
                 logger.error(f"Error in spider task: {str(e)}")
@@ -166,3 +178,15 @@ class TaskManager:
             self.session.commit()
             return True
         return False
+
+    @staticmethod
+    async def update_sleep_time(sleep_time: int):
+        """Update the spider sleep time"""
+        if sleep_time > 0:
+            spider_config.sleep_time = sleep_time
+            return True
+        return False
+
+    def get_spider_sleep_time(self):
+        """Get the current spider sleep time"""
+        return spider_config.sleep_time

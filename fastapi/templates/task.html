@@ -24,6 +24,25 @@
         </div>
     </div>
 
+    <!-- Spider Sleep Time Configuration -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Spider Configuration</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" action="/update_sleep_time" class="row g-3">
+                <div class="col-md-6">
+                    <label for="sleep_time" class="form-label">Sleep Time (seconds)</label>
+                    <input type="number" class="form-control" id="sleep_time" name="sleep_time" 
+                           value="{{ spider_sleep_time }}" min="1" required>
+                </div>
+                <div class="col-md-6 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary">Update Sleep Time</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Tasks Table -->
     <div class="card shadow-sm">
         <div class="card-header">
@@ -44,11 +63,11 @@
                     </thead>
                     <tbody>
                         {% for task in tasks %}
-                        <tr>
+                        <tr data-task-id="{{ task.id }}">
                             <td>{{ task.id }}</td>
                             <td>{{ task.date }}</td>
                             <td>
-                                <div class="progress" style="height: 20px;">
+                                <div class="progress" style="height: 20px;" id="progress-{{ task.id }}">
                                     <div class="progress-bar" role="progressbar" 
                                          style="width: {{ (task.current_page / task.total_page * 100)|round if task.total_page > 0 else 0 }}%"
                                          aria-valuenow="{{ task.current_page }}" 
@@ -59,15 +78,12 @@
                                 </div>
                             </td>
                             <td>
-                                {% if task.done %}
-                                    <span class="badge bg-success">Completed</span>
-                                {% elif task.stop_flag %}
-                                    <span class="badge bg-warning">Stopped</span>
-                                {% else %}
-                                    <span class="badge bg-primary">Running</span>
-                                {% endif %}
+                                <span class="badge {% if task.done %}bg-success{% elif task.stop_flag %}bg-warning{% else %}bg-primary{% endif %}" 
+                                      id="status-{{ task.id }}">
+                                    {% if task.done %}Completed{% elif task.stop_flag %}Stopped{% else %}Running{% endif %}
+                                </span>
                             </td>
-                            <td>
+                            <td id="action-{{ task.id }}">
                                 {% if task.done or task.stop_flag %}
                                     <form method="post" action="/start_task/{{ task.id }}" class="d-inline">
                                         <button type="submit" class="btn btn-success btn-sm">
