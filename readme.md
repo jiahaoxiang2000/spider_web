@@ -18,6 +18,14 @@ pip install -r ../requirements.txt
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
+## Deployment
+
+here we use the docker python image to deploy, there is the start cmd:
+
+```bash
+pip install -r requirements.txt && uvicorn main:app --host 0.0.0.0 --port 8000 
+```
+
 ## Apply Migrations
 
 Create and apply the initial migrations for your models, i.e. here use sqlite3 as the database. Detail run command:
