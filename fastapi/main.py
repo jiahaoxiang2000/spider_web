@@ -8,6 +8,7 @@ from auth import Auth
 from account import AccountDB, AccountManager
 from database import TaskDB
 from task_manager import TaskManager
+from scheduler import start_scheduler
 
 app = FastAPI()
 auth = Auth()  # Create an instance of Auth
@@ -208,6 +209,12 @@ async def update_sleep_time(request: Request):
     sleep_time = int(str(form_data.get("sleep_time", 10)))
     await task_manager.update_sleep_time(sleep_time)
     return RedirectResponse(url="/task", status_code=303)
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Start the scheduler when the application starts"""
+    start_scheduler()
 
 
 @app.on_event("shutdown")

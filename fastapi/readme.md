@@ -2,10 +2,10 @@
 
 ## Will DO
 
-- [ ] the account keep live function on all day
-- [ ] the spider task
-  - [ ] the spider logic, need control the spider speed
-  - [ ] the timing run on every day 00:00
+- [x] the account keep live function on all day
+- [x] the spider task
+  - [x] the spider logic, need control the spider speed
+  - [x] the timing run on every day 00:30
 
 ## Installation And Running
 

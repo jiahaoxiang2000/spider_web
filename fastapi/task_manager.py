@@ -144,7 +144,7 @@ class TaskManager:
 
         self.session.add(task)
         self.session.commit()
-        return task
+        return task  # Return the task object
 
     def get_tasks(self):
         return self.session.query(TaskDB).order_by(TaskDB.created_at.desc()).all()
