@@ -30,6 +30,7 @@ class Auth:
         )
         # the query_user_role_url is GET request, the prams is like this:
         # ?userid=e888946e0213c9a4685bd94e7f1563ae
+        self.normal_user_role_id = "082678e5d9270824353a223a6727e009"
 
     async def is_super_user(self, user_id: str) -> bool:
         try:
@@ -62,6 +63,8 @@ class Auth:
             # Add the role if user isn't a super user
             success = await self.add_user_role(self.upgrade_user_role_id, [user_id])
             if success:
+                # delete the normal user role
+                await self.delete_user_role(self.normal_user_role_id, user_id)
                 logger.info(f"Successfully upgraded authority for user: {username}")
             else:
                 logger.error(f"Failed to upgrade authority for user: {username}")
@@ -77,10 +80,15 @@ class Auth:
             if users:
                 logger.info(f"downgrade_authority: {username} {users[0]['id']}")
                 if username == users[0]["userName"]:
-                    success = await self.delete_user_role(
-                        self.upgrade_user_role_id, users[0]["id"]
+                    # Add the normal user role
+                    success = await self.add_user_role(
+                        self.normal_user_role_id, [users[0]["id"]]
                     )
                     if success:
+                        # delete the super user role
+                        await self.delete_user_role(
+                            self.upgrade_user_role_id, users[0]["id"]
+                        )
                         logger.info(
                             f"Successfully downgraded authority for user: {username}"
                         )
