@@ -23,7 +23,7 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 here we use the docker python image to deploy, there is the start cmd:
 
 ```bash
-pip install -r requirements.txt && uvicorn main:app --host 0.0.0.0 --port 8000 
+pip install -r requirements.txt && cd src && uvicorn main:app --host 0.0.0.0 --port 8000 
 ```
 
 ## Apply Migrations

@@ -15,10 +15,6 @@ auth = Auth()  # Create an instance of Auth
 account_manager = AccountManager()  # Add account manager instance
 task_manager = TaskManager()
 
-# Mount static files with absolute path
-static_path = Path(__file__).parent / "static"
-app.mount("/static", StaticFiles(directory=str(static_path)), name="static")
-
 # Configure templates
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 
