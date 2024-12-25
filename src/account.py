@@ -51,7 +51,7 @@ class AccountManager:
                     except Exception as e:
                         logger.error(f"Error in periodic health check loop: {str(e)}")
                     logger.debug("Sleeping for 10 minutes before next health check")
-                    await asyncio.sleep(600)
+                    await asyncio.sleep(1200)
 
             self.health_check_task = asyncio.ensure_future(run_periodic())
             logger.info(
