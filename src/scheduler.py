@@ -24,6 +24,6 @@ async def create_daily_task():
 def start_scheduler():
     # Schedule task to run at 00:30 Hong Kong time every day
     scheduler.add_job(
-        create_daily_task, trigger="cron", hour=0, minute=30, id="daily_task_creation"
+        create_daily_task, trigger="cron", hour=4, minute=0, id="daily_task_creation"
     )
     scheduler.start()
