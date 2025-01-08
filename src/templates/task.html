@@ -45,8 +45,27 @@
 
     <!-- Tasks Table -->
     <div class="card shadow-sm">
-        <div class="card-header">
+        <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="card-title mb-0">Task List</h5>
+            <nav aria-label="Task navigation">
+                <ul class="pagination mb-0">
+                    {% if page > 1 %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page - 1 }}">&laquo;</a>
+                    </li>
+                    {% endif %}
+                    {% for p in range(1, total_pages + 1) %}
+                    <li class="page-item {% if p == page %}active{% endif %}">
+                        <a class="page-link" href="?page={{ p }}">{{ p }}</a>
+                    </li>
+                    {% endfor %}
+                    {% if page < total_pages %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page + 1 }}">&raquo;</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
         </div>
         <div class="card-body">
             <div class="table-responsive">
@@ -62,7 +81,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for task in tasks %}
+                        {% for task in page_tasks %}
                         <tr data-task-id="{{ task.id }}">
                             <td>{{ task.id }}</td>
                             <td>{{ task.date }}</td>

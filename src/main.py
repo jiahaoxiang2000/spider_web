@@ -26,11 +26,35 @@ def read_root():
 
 @app.get("/task")
 async def get_task(request: Request):
-    tasks = task_manager.get_tasks()
+    # Get page parameter from query string, default to 1
+    page = int(request.query_params.get("page", 1))
+    items_per_page = 10
+    
+    # Get all tasks and calculate pagination
+    all_tasks = task_manager.get_tasks()
+    total_tasks = len(all_tasks)
+    total_pages = (total_tasks + items_per_page - 1) // items_per_page
+    
+    # Ensure page is within valid range
+    page = max(1, min(page, total_pages)) if total_pages > 0 else 1
+    
+    # Get tasks for current page
+    start_idx = (page - 1) * items_per_page
+    end_idx = start_idx + items_per_page
+    page_tasks = all_tasks[start_idx:end_idx]
+    
     spider_sleep_time = task_manager.get_spider_sleep_time()
     return templates.TemplateResponse(
         "task.html",
-        {"request": request, "tasks": tasks, "spider_sleep_time": spider_sleep_time},
+        {
+            "request": request,
+            "tasks": all_tasks,  # Keep this for backward compatibility
+            "page_tasks": page_tasks,
+            "spider_sleep_time": spider_sleep_time,
+            "page": page,
+            "total_pages": total_pages,
+            "range": range,  # Add range function to template context
+        },
     )
 
 
